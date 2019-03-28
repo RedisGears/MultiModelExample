@@ -117,7 +117,13 @@ redis-cli RG.PYEXECUTE \
 
 read
 
-for rate in 60 65 70 80 95 120 150 200 250 300 350 350 350 350 350 350 350 200 150 100 90 80 
+for rate in {60..350..15}
+do
+	redis-cli HSET marsman:100 HeartBeat $rate
+	sleep 1
+done
+
+for rate in {350..80..30}
 do
 	redis-cli HSET marsman:100 HeartBeat $rate
 	sleep 1
@@ -125,4 +131,4 @@ done
 
 read
 
-redis-cli TS.RANGE heartbeat:marsman:100 - +
+redis-cli TS.RANGE heartbeat:marsman:100 - + AGGREGATION AVG 5
