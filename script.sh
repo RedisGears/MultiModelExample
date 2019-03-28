@@ -1,6 +1,6 @@
 #!/bin/bash -x
 
-redis-cli MODULE LOAD /home/guy/redisconf/RedisGears/redisgears.so
+redis-cli MODULE LOAD `pwd`/redisgears.so
 
 read
 
@@ -11,7 +11,7 @@ read
 
 ######## RediSearch ################################################################################################# 
 
-redis-cli MODULE LOAD /home/guy/redisconf/RediSearch/src/redisearch.so SAFEMODE
+redis-cli MODULE LOAD `pwd`/redisearch.so SAFEMODE
 
 read
 
@@ -49,7 +49,7 @@ read
 
 ######## RedisGraph ################################################################################################# 
 
-redis-cli MODULE LOAD /home/guy/redisconf/RedisGraph/src/redisgraph.so
+redis-cli MODULE LOAD `pwd`/redisgraph.so
 
 read
 
@@ -105,7 +105,7 @@ redis-cli GRAPH.QUERY marsmen "MATCH (n)-[:Relation]->(m) return n.Name, m.Name"
  
 ######## RedisTimeSeries ############################################################################################ 
 
-redis-cli MODULE LOAD /home/guy/redisconf/RedisTimeSeries/src/redistimeseries.so
+redis-cli MODULE LOAD `pwd`/redistimeseries.so
 
 read
 
