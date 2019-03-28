@@ -30,7 +30,6 @@ redis-cli RG.PYEXECUTE \
 redis-cli RG.PYEXECUTE \
 "GearsBuilder()\
 .foreach(lambda x: execute('FT.ADDHASH', 'marsmen', x['key'], '1.0', 'REPLACE'))\
-.count()\
 .register('marsman:*')"
 
 read
@@ -81,7 +80,6 @@ redis-cli RG.PYEXECUTE \
 .foreach(lambda x: execute('GRAPH.QUERY', 'marsmen', 'MATCH (a:marsman)-[r:Relation]->() where a.ID=\"%s\" DELETE r' % (x['key'])))\
 .filter(lambda x: 'Relation' in x['value'].keys())\
 .foreach(lambda x: execute('GRAPH.QUERY', 'marsmen', 'MATCH (a:marsman), (b:marsman) where a.ID=\"%s\" AND b.ID=\"%s\" CREATE (a)-[:Relation]->(b)' % (x['key'], x['value']['Relation'])))\
-.count()\
 .register('marsman:*')"
 
 read
@@ -110,3 +108,21 @@ redis-cli GRAPH.QUERY marsmen "MATCH (n)-[:Relation]->(m) return n.Name, m.Name"
 redis-cli MODULE LOAD /home/guy/redisconf/RedisTimeSeries/src/redistimeseries.so
 
 read
+
+# Register for new hearbeat event
+redis-cli RG.PYEXECUTE \
+"GearsBuilder()\
+.foreach(lambda x: execute('TS.ADD', 'heartbeat:'+ x['key'], '*', x['value']['HeartBeat']))\
+.register('marsman:*')"
+
+read
+
+for rate in 60 65 70 80 95 120 150 200 250 300 350 350 350 350 350 350 350 200 150 100 90 80 
+do
+	redis-cli HSET marsman:100 HeartBeat $rate
+	sleep 1
+done
+
+read
+
+redis-cli TS.RANGE heartbeat:marsman:100 - +
