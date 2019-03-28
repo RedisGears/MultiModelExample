@@ -5,11 +5,11 @@ redis-cli MODULE LOAD /home/guy/redisconf/RedisGears/redisgears.so
 read
 
 redis-cli HSET marsman:100 Name Douglas Last Quaid
-redis-cli HSET marsman:101 Name Lori Last Quaid # Quaid's seemingly loving wife
+redis-cli HSET marsman:101 Name Lori Last Quaid       # Quaid's seemingly loving wife
 
 read
 
-#########################################################################################################
+######## RediSearch ################################################################################################# 
 
 redis-cli MODULE LOAD /home/guy/redisconf/RediSearch/src/redisearch.so SAFEMODE
 
@@ -19,14 +19,19 @@ redis-cli FT.CREATE marsmen SCHEMA Name Text Last Text
 
 read
 
-redis-cli RG.PYEXECUTE "GearsBuilder().foreach(lambda x: execute('FT.ADDHASH', 'marsmen', x['key'], '1.0', 'REPLACE')).count().run('marsman:*')"
+# Index existing marsmen
+redis-cli RG.PYEXECUTE \
+"GearsBuilder()\
+.foreach(lambda x: execute('FT.ADDHASH', 'marsmen', x['key'], '1.0', 'REPLACE'))\
+.count()\
+.run('marsman:*')"
 
-redis-cli RG.PYEXECUTE "GearsBuilder().foreach(lambda x: execute('FT.ADDHASH', 'marsmen', x['key'], '1.0', 'REPLACE')).count().register('marsman:*')"
-
-read
-
-redis-cli HSET marsman:102 Name Vilos Last Cohaagen # Governor of the Mars 
-redis-cli HSET marsman:103 Name Bob Last McClane # Rekall manager and sales agent 
+# Register for new/update marsmen
+redis-cli RG.PYEXECUTE \
+"GearsBuilder()\
+.foreach(lambda x: execute('FT.ADDHASH', 'marsmen', x['key'], '1.0', 'REPLACE'))\
+.count()\
+.register('marsman:*')"
 
 read
 
@@ -34,25 +39,74 @@ redis-cli FT.SEARCH marsmen Qu*
 
 read
 
-redis-cli FT.SEARCH marsmen Bob
+redis-cli HSET marsman:102 Name Vilos Last Cohaagen # Governor of the Mars 
+redis-cli HSET marsman:103 Name Bob Last McClane    # Rekall manager and sales agent 
 
 read
 
-#########################################################################################################
+redis-cli FT.SEARCH marsmen mcc*
+
+read
+
+######## RedisGraph ################################################################################################# 
 
 redis-cli MODULE LOAD /home/guy/redisconf/RedisGraph/src/redisgraph.so
 
 read
 
-redis-cli HMSET marsman:101 Married marsman:100
+redis-cli HSET marsman:101 Relation marsman:100
 
 read
 
-redis-cli RG.PYEXECUTE "GearsBuilder().foreach(lambda x: execute('GRAPH.QUERY', 'marsmen', 'MERGE ( :marsman {ID:\"%s\"})' % x['key'])).foreach(lambda x: execute('GRAPH.QUERY', 'marsmen','MATCH ( n:marsman {ID:\"%s\"}) SET n.Name=\"%s\", n.Last=\"%s\"' % (x['key'], x['value']['Name'], x['value']['Last']))).count().run('marsman:*')"
+# Create nodes for all marsmen
+redis-cli RG.PYEXECUTE \
+"GearsBuilder()\
+.foreach(lambda x: execute('GRAPH.QUERY', 'marsmen', 'MERGE ( :marsman {ID:\"%s\"})' % x['key']))\
+.foreach(lambda x: execute('GRAPH.QUERY', 'marsmen', 'MATCH (n:marsman {ID:\"%s\"}) SET n.Name=\"%s\", n.Last=\"%s\"' % (x['key'], x['value']['Name'], x['value']['Last'])))\
+.count()\
+.run('marsman:*')"
 
-redis-cli RG.PYEXECUTE "GearsBuilder().filter(lambda x: 'Married' in x['value'].keys()).foreach(lambda x: execute('GRAPH.QUERY', 'marsmen', 'MATCH (a:marsman), (b:marsman) where a.ID=\"%s\" AND b.ID=\"%s\" CREATE (a)-[:Married]->(b)' % (x['key'], x['value']['Married']))).run('marsman:*')"
+# Create relations
+redis-cli RG.PYEXECUTE \
+"GearsBuilder()\
+.filter(lambda x: 'Relation' in x['value'].keys())\
+.foreach(lambda x: execute('GRAPH.QUERY', 'marsmen', 'MATCH (a:marsman), (b:marsman) where a.ID=\"%s\" AND b.ID=\"%s\" CREATE (a)-[:Relation]->(b)' % (x['key'], x['value']['Relation'])))\
+.run('marsman:*')"
 
-redis-cli RG.PYEXECUTE "GearsBuilder().foreach(lambda x: execute('GRAPH.QUERY', 'marsmen', 'MERGE ( :marsman {ID:\"%s\"})' % x['key'])).foreach(lambda x: execute('GRAPH.QUERY', 'marsmen','MATCH ( n:marsman {ID:\"%s\"}) SET n.Name=\"%s\", n.Last=\"%s\"' % (x['key'], x['value']['Name'], x['value']['Last']))).foreach(lambda x: execute('GRAPH.QUERY', 'marsmen', 'MATCH (a:marsman)-(r)->() where a.ID=\"%s\" DELETE r' % (x['key']))).filter(lambda x: 'Married' in x['value'].keys()).foreach(lambda x: execute('GRAPH.QUERY', 'marsmen', 'MATCH (a:marsman), (b:marsman) where a.ID=\"%s\" AND b.ID=\"%s\" CREATE (a)-[:Married]->(b)' % (x['key'], x['value']['Married']))).count().register('marsman:*')"
+# Register for new nodes/relations update
+redis-cli RG.PYEXECUTE \
+"GearsBuilder()\
+.foreach(lambda x: execute('GRAPH.QUERY', 'marsmen', 'MERGE ( :marsman {ID:\"%s\"})' % x['key']))\
+.foreach(lambda x: execute('GRAPH.QUERY', 'marsmen', 'MATCH (n:marsman {ID:\"%s\"}) SET n.Name=\"%s\", n.Last=\"%s\"' % (x['key'], x['value']['Name'], x['value']['Last'])))\
+.foreach(lambda x: execute('GRAPH.QUERY', 'marsmen', 'MATCH (a:marsman)-[r:Relation]->() where a.ID=\"%s\" DELETE r' % (x['key'])))\
+.filter(lambda x: 'Relation' in x['value'].keys())\
+.foreach(lambda x: execute('GRAPH.QUERY', 'marsmen', 'MATCH (a:marsman), (b:marsman) where a.ID=\"%s\" AND b.ID=\"%s\" CREATE (a)-[:Relation]->(b)' % (x['key'], x['value']['Relation'])))\
+.count()\
+.register('marsman:*')"
 
 read
-#########################################################################################################
+
+redis-cli GRAPH.QUERY marsmen "MATCH (n)-[:Relation]->(m) return n.Name, m.Name"
+
+read
+
+redis-cli HSET marsman:104 Name Robert Last Costanzo Relation marsman:100 # Quaid's workmate (Cohaagen's agent)
+
+read
+
+redis-cli GRAPH.QUERY marsmen "MATCH (n)-[:Relation]->(m) return n.Name, m.Name"
+
+
+read
+
+redis-cli HDEL marsman:104 Relation # Quaid killed! Robert
+
+read
+
+redis-cli GRAPH.QUERY marsmen "MATCH (n)-[:Relation]->(m) return n.Name, m.Name"
+ 
+######## RedisTimeSeries ############################################################################################ 
+
+redis-cli MODULE LOAD /home/guy/redisconf/RedisTimeSeries/src/redistimeseries.so
+
+read
