@@ -37,11 +37,11 @@ read
 
 redis-cli FT.SEARCH marsmen Qu*
 
-read
+read -p "Back to slides..."
 
 redis-cli HSET marsman:103 Name Vilos Last Cohaagen # Governor of the Mars 
 redis-cli HSET marsman:104 Name Bob Last McClane    # Rekall manager and sales agent 
-
+redis-cli HSET marsman:105 Name Harry Last Harry    # Douglas friend
 read
 
 redis-cli FT.SEARCH marsmen mcc*
@@ -89,7 +89,7 @@ redis-cli GRAPH.QUERY marsmen "MATCH (n)-[:Relation]->(m) return n.Name, m.Name"
 
 read
 
-redis-cli HSET marsman:104 Relation marsman:100 # Quaid's workmate (Cohaagen's agent)
+redis-cli HSET marsman:105 Relation marsman:100 # Quaid's workmate (Cohaagen's agent)
 
 read
 
