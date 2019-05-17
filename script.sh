@@ -1,18 +1,20 @@
 #!/bin/bash -x
+nohup redis-server &
+sleep 5
 
-redis-cli MODULE LOAD `pwd`/redisgears.so
+redis-cli MODULE LOAD /usr/lib/redis/modules/redisgears.so "PythonHomeDir" "/usr/lib/redis/modules/deps/cpython/"
 
 read
 
 redis-cli HSET marsman:100 Name Douglas Last Quaid
 redis-cli HSET marsman:101 Name Lori Last Quaid       # Quaid's seemingly loving wife
-redis-cli HSET marsman:102 Name Melina Last Melina 
+redis-cli HSET marsman:102 Name Melina Last Melina
 
 read -p "Back to slides..."
 
-######## RediSearch ################################################################################################# 
+######## RediSearch #################################################################################################
 
-redis-cli MODULE LOAD `pwd`/redisearch.so SAFEMODE
+redis-cli MODULE LOAD /usr/lib/redis/modules/redisearch.so SAFEMODE
 
 read
 
@@ -39,8 +41,8 @@ redis-cli FT.SEARCH marsmen Qu*
 
 read -p "Back to slides..."
 
-redis-cli HSET marsman:103 Name Vilos Last Cohaagen # Governor of the Mars 
-redis-cli HSET marsman:104 Name Bob Last McClane    # Rekall manager and sales agent 
+redis-cli HSET marsman:103 Name Vilos Last Cohaagen # Governor of the Mars
+redis-cli HSET marsman:104 Name Bob Last McClane    # Rekall manager and sales agent
 redis-cli HSET marsman:105 Name Harry Last Harry    # Douglas friend
 read
 
@@ -48,9 +50,9 @@ redis-cli FT.SEARCH marsmen mcc*
 
 read -p "Back to slides..."
 
-######## RedisGraph ################################################################################################# 
+######## RedisGraph #################################################################################################
 
-redis-cli MODULE LOAD `pwd`/redisgraph.so
+redis-cli MODULE LOAD /usr/lib/redis/modules/redisgraph.so
 
 read
 
@@ -98,7 +100,7 @@ redis-cli GRAPH.QUERY marsmen "MATCH (n)-[:Relation]->(m) return n.Name, m.Name"
 
 read -p "Back to slides..."
 
-redis-cli HDEL marsman:101 Relation # Quaid killed! Lori 
+redis-cli HDEL marsman:101 Relation # Quaid killed! Lori
 
 read
 
@@ -106,9 +108,9 @@ redis-cli GRAPH.QUERY marsmen "MATCH (n)-[:Relation]->(m) return n.Name, m.Name"
 
 read -p "Back to slides..."
 
-######## RedisTimeSeries ############################################################################################ 
+######## RedisTimeSeries ############################################################################################
 
-redis-cli MODULE LOAD `pwd`/redistimeseries.so
+redis-cli MODULE LOAD /usr/lib/redis/modules/redistimeseries.so
 
 read
 
